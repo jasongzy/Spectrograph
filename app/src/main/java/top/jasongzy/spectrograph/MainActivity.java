@@ -18,6 +18,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Vibrator;
 import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -82,6 +83,19 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
+        ivPhoto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                clickImage();
+            }
+        });
+        ivPhoto.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                longPressImage();
+                return true;
+            }
+        });
     }
 
     private void checkPermissionAndAlbum() {
@@ -95,6 +109,22 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                     PERMISSION_CAMERA_REQUEST_CODE);
         }
+    }
+
+    private void clickImage() {
+        if (mCameraImagePath == null) {
+            Toast.makeText(this, "找个苹果试试看吧！", Toast.LENGTH_LONG).show();
+            ;
+        } else {
+            Toast.makeText(this, "图片路径：" + mCameraImagePath, Toast.LENGTH_LONG).show();
+            ;
+        }
+    }
+
+    private void longPressImage() {
+        Toast.makeText(this, "长按相机按钮可以从相册选择图片哦", Toast.LENGTH_LONG).show();
+        Vibrator vibrator = (Vibrator) this.getSystemService(this.VIBRATOR_SERVICE);
+        vibrator.vibrate(50);
     }
 
     /**
@@ -132,12 +162,13 @@ public class MainActivity extends AppCompatActivity {
                     } catch (Exception e) {
                         //e.printStackTrace();
                     }
-
                     ivPhoto.setImageBitmap(BitmapFactory.decodeFile(mCameraImagePath));
                 }
-                picResult.setText("图片路径：" + mCameraImagePath + "\n");
-                picResult.append("检测结果如下\n苹果糖度：");
+                // 开始图像处理
+                picResult.setText("检测结果如下\n");
+                picResult.append("苹果糖度：");
             } else {
+                mCameraImagePath = null;
                 Toast.makeText(this, "取消", Toast.LENGTH_LONG).show();
             }
         }
@@ -249,6 +280,9 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.clear:
                 RecursionDeleteFile(getExternalFilesDir(Environment.DIRECTORY_PICTURES));
+                ivPhoto.setImageDrawable(getResources().getDrawable(R.drawable.apple));
+                mCameraImagePath = null;
+                picResult.setText(null);
                 Toast.makeText(this, "已清除照片拍摄缓存", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.about:

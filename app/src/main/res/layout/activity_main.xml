@@ -23,6 +23,8 @@
         android:layout_height="238dp"
         android:layout_marginTop="20dp"
         android:adjustViewBounds="true"
+        android:background="?android:attr/selectableItemBackground"
+        android:foreground="?android:attr/selectableItemBackground"
         app:srcCompat="@drawable/apple" />
 
     <LinearLayout
@@ -50,6 +52,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="start|top"
-        android:textSize="16sp" />
+        android:textSize="18sp" />
 
 </LinearLayout>
