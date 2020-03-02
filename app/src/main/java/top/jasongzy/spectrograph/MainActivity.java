@@ -28,6 +28,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.io.File;
 import java.io.IOException;
@@ -169,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
                 picResult.append("苹果糖度：");
             } else {
                 mCameraImagePath = null;
-                Toast.makeText(this, "取消", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "取消", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -283,7 +284,8 @@ public class MainActivity extends AppCompatActivity {
                 ivPhoto.setImageDrawable(getResources().getDrawable(R.drawable.apple));
                 mCameraImagePath = null;
                 picResult.setText(null);
-                Toast.makeText(this, "已清除照片拍摄缓存", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(this, "已清除照片拍摄缓存", Toast.LENGTH_SHORT).show();
+                Snackbar.make(this.findViewById(android.R.id.content), "已清除照片拍摄缓存", Snackbar.LENGTH_LONG).show();
                 break;
             case R.id.about:
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jasongzy")));
