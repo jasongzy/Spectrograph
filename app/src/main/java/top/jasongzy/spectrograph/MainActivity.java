@@ -1,7 +1,8 @@
-package com.donkingliang.photograph;
+package top.jasongzy.spectrograph;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
@@ -9,7 +10,6 @@ import androidx.core.os.EnvironmentCompat;
 
 import android.Manifest;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
@@ -18,10 +18,14 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,8 +35,9 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ImageView ivCamera;
     private ImageView ivPhoto;
+    private TextView picResult;
+    private FloatingActionButton fab;
 
     // 拍照的requestCode
     private static final int CAMERA_REQUEST_CODE = 0x00000010;
@@ -40,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_CAMERA_REQUEST_CODE = 0x00000012;
     /**
      * 用于保存拍照图片的uri
-      */
+     */
     private Uri mCameraUri;
 
     /**
@@ -49,19 +54,22 @@ public class MainActivity extends AppCompatActivity {
     private String mCameraImagePath;
 
     /**
-     *  是否是Android 10以上手机
-      */
+     * 是否是Android 10以上手机
+     */
     private boolean isAndroidQ = Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
-        ivCamera = findViewById(R.id.ivCamera);
         ivPhoto = findViewById(R.id.ivPhoto);
+        picResult = findViewById(R.id.picResult);
+        fab = findViewById(R.id.fab);
 
-        ivCamera.setOnClickListener(new View.OnClickListener() {
+        fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 checkPermissionAndCamera();
@@ -81,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
             openCamera();
         } else {
             //没有权限，申请权限。
-            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.CAMERA},
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA},
                     PERMISSION_CAMERA_REQUEST_CODE);
         }
     }
@@ -98,8 +106,10 @@ public class MainActivity extends AppCompatActivity {
                     // 使用图片路径加载
                     ivPhoto.setImageBitmap(BitmapFactory.decodeFile(mCameraImagePath));
                 }
+                picResult.setText("检测结果如下：\n苹果糖度：");
+                picResult.append("路径：" + mCameraImagePath);
             } else {
-                Toast.makeText(this,"取消",Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "取消", Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -120,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
                 openCamera();
             } else {
                 //拒绝权限，弹出提示框。
-                Toast.makeText(this,"拍照权限被拒绝",Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "拍照权限被拒绝", Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -174,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
         String status = Environment.getExternalStorageState();
         // 判断是否有SD卡,优先使用SD卡存储,当没有SD卡时使用手机存储
         if (status.equals(Environment.MEDIA_MOUNTED)) {
-           return getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, new ContentValues());
+            return getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, new ContentValues());
         } else {
             return getContentResolver().insert(MediaStore.Images.Media.INTERNAL_CONTENT_URI, new ContentValues());
         }
@@ -182,11 +192,12 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * 创建保存图片的文件
+     *
      * @return
      * @throws IOException
      */
     private File createImageFile() throws IOException {
-        String imageName = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+        String imageName = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date()) + ".jpg";
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         if (!storageDir.exists()) {
             storageDir.mkdir();
@@ -197,6 +208,47 @@ public class MainActivity extends AppCompatActivity {
         }
         return tempFile;
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.toolbar, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.clear:
+                RecursionDeleteFile(getExternalFilesDir(Environment.DIRECTORY_PICTURES));
+                Toast.makeText(this, "已清除照片拍摄缓存", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.about:
+                Toast.makeText(this, "关于", Toast.LENGTH_SHORT).show();
+                break;
+        }
+        return true;
+    }
+
+    /**
+     * 递归删除文件和文件夹
+     *
+     * @param file 要删除的根目录
+     */
+    public void RecursionDeleteFile(File file) {
+        if (file.isFile()) {
+            file.delete();
+            return;
+        }
+        if (file.isDirectory()) {
+            File[] childFile = file.listFiles();
+            if (childFile == null || childFile.length == 0) {
+                file.delete();
+                return;
+            }
+            for (File f : childFile) {
+                RecursionDeleteFile(f);
+            }
+            file.delete();
+        }
+    }
 }
-
-

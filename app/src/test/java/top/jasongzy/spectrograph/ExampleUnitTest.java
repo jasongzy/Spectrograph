@@ -1,4 +1,4 @@
-package com.donkingliang.photograph;
+package top.jasongzy.spectrograph;
 
 import org.junit.Test;
 
