@@ -106,8 +106,8 @@ public class MainActivity extends AppCompatActivity {
                     // 使用图片路径加载
                     ivPhoto.setImageBitmap(BitmapFactory.decodeFile(mCameraImagePath));
                 }
-                picResult.setText("检测结果如下：\n苹果糖度：");
-                picResult.append("路径：" + mCameraImagePath);
+                picResult.setText("图片路径：" + mCameraImagePath + "\n");
+                picResult.append("检测结果如下\n苹果糖度：");
             } else {
                 Toast.makeText(this, "取消", Toast.LENGTH_LONG).show();
             }
@@ -223,7 +223,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "已清除照片拍摄缓存", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.about:
-                Toast.makeText(this, "关于", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jasongzy")));
                 break;
         }
         return true;
