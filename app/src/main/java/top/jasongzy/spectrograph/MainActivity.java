@@ -12,6 +12,7 @@ import android.Manifest;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
@@ -35,14 +36,13 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ImageView ivPhoto;
-    private TextView picResult;
-    private FloatingActionButton fab;
-
     // 拍照的requestCode
     private static final int CAMERA_REQUEST_CODE = 0x00000010;
     // 申请相机权限的requestCode
     private static final int PERMISSION_CAMERA_REQUEST_CODE = 0x00000012;
+    private ImageView ivPhoto;
+    private TextView picResult;
+    private FloatingActionButton fab;
     /**
      * 用于保存拍照图片的uri
      */
@@ -75,6 +75,26 @@ public class MainActivity extends AppCompatActivity {
                 checkPermissionAndCamera();
             }
         });
+        fab.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                checkPermissionAndAlbum();
+                return true;
+            }
+        });
+    }
+
+    private void checkPermissionAndAlbum() {
+        int hasCameraPermission = ContextCompat.checkSelfPermission(getApplication(),
+                Manifest.permission.READ_EXTERNAL_STORAGE);
+        if (hasCameraPermission == PackageManager.PERMISSION_GRANTED) {
+            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            startActivityForResult(intent, CAMERA_REQUEST_CODE);
+        } else {
+            //没有权限，申请权限。
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                    PERMISSION_CAMERA_REQUEST_CODE);
+        }
     }
 
     /**
@@ -104,6 +124,15 @@ public class MainActivity extends AppCompatActivity {
                     ivPhoto.setImageURI(mCameraUri);
                 } else {
                     // 使用图片路径加载
+                    try {
+                        Cursor cursor = getContentResolver().query(data.getData(), null, null, null, null);
+                        if (cursor != null && cursor.moveToFirst()) {
+                            mCameraImagePath = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
+                        }
+                    } catch (Exception e) {
+                        //e.printStackTrace();
+                    }
+
                     ivPhoto.setImageBitmap(BitmapFactory.decodeFile(mCameraImagePath));
                 }
                 picResult.setText("图片路径：" + mCameraImagePath + "\n");
@@ -130,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
                 openCamera();
             } else {
                 //拒绝权限，弹出提示框。
-                Toast.makeText(this, "拍照权限被拒绝", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "权限申请被拒绝", Toast.LENGTH_LONG).show();
             }
         }
     }
