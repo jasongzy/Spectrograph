@@ -20,11 +20,12 @@
     <ImageView
         android:id="@+id/ivPhoto"
         android:layout_width="match_parent"
-        android:layout_height="238dp"
+        android:layout_height="250dp"
         android:layout_marginTop="20dp"
         android:adjustViewBounds="true"
         android:background="?android:attr/selectableItemBackground"
         android:foreground="?android:attr/selectableItemBackground"
+        android:scaleType="fitCenter"
         app:srcCompat="@drawable/apple" />
 
     <LinearLayout
@@ -47,10 +48,19 @@
 
     </LinearLayout>
 
+    <ImageView
+        android:id="@+id/plot"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:background="@drawable/spectrum_trans"
+        android:scaleType="fitXY"
+        app:srcCompat="@drawable/spectrum" />
+
     <TextView
         android:id="@+id/picResult"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_margin="16dp"
         android:gravity="start|top"
         android:textSize="18sp" />
 
