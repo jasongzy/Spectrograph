@@ -38,9 +38,7 @@ import com.google.android.material.snackbar.Snackbar;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
@@ -53,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView finalResult;
     private FloatingActionButton fab;
     private FloatingActionButton fabPlot;
+
     /**
      * 用于保存拍照图片的uri
      */
@@ -68,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private boolean isAndroidQ = Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q;
 
-    private String savedmCameraImagePath = null;
+    private String savedMCameraImagePath = null;
     private boolean isAbsorbance = false;
     private double[] brightArray = null;
     private double[] savedBrightArray = null;
@@ -91,9 +90,7 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        /**
-         * 原始图片
-         */
+        //原始图片
         ivPhoto = findViewById(R.id.ivPhoto);
         ivPhoto.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -113,9 +110,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        /**
-         * 绘制的曲线
-         */
+
+        // 绘制的曲线
         plot = findViewById(R.id.plot);
         plot.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -137,29 +133,27 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        /**
-         * 相机按钮
-         */
+
+        // 相机按钮
         fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                savedmCameraImagePath = mCameraImagePath;
+                savedMCameraImagePath = mCameraImagePath;
                 checkPermissionAndCamera();
             }
         });
         fab.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
-                savedmCameraImagePath = mCameraImagePath;
+                savedMCameraImagePath = mCameraImagePath;
                 checkPermissionAndAlbum();
                 return true;
             }
         });
 
-        /**
-         * 图像对比按钮
-         */
+
+        // 图像对比按钮
         fabPlot = findViewById(R.id.fabPlot);
         fabPlot.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -223,9 +217,7 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void onClick(View v) {
                                 savedBrightArray = new double[brightArray.length];
-                                for (int i = 0; i < brightArray.length; i++) {
-                                    savedBrightArray[i] = brightArray[i];
-                                }
+                                System.arraycopy(brightArray, 0, savedBrightArray, 0, brightArray.length);
                                 fabPlot.setVisibility(View.VISIBLE);
                                 absorbancePlot = null;
                                 toastMessage("已设置", false);
@@ -242,24 +234,14 @@ public class MainActivity extends AppCompatActivity {
         int width = bm.getWidth();
         int height = bm.getHeight();
         int r, g, b;
-        List<Double> bright = new ArrayList<>();
+        double[] brightArray = new double[width];
         for (int i = 0; i < width; i++) {
             int localTemp = bm.getPixel(i, height / 2);
             r = (localTemp | 0xff00ffff) >> 16 & 0x00ff;
             g = (localTemp | 0xffff00ff) >> 8 & 0x0000ff;
             b = (localTemp | 0xffffff00) & 0x0000ff;
             // 灰度值计算公式
-            bright.add(0.299 * r + 0.587 * g + 0.114 * b);
-        }
-        // Double List 转 double 数组
-        Double[] DoubleArray = new Double[bright.size()];
-        bright.toArray(DoubleArray);
-        if (DoubleArray == null) {
-            return null;
-        }
-        double[] brightArray = new double[DoubleArray.length];
-        for (int i = 0; i < DoubleArray.length; i++) {
-            brightArray[i] = DoubleArray[i].doubleValue();
+            brightArray[i] = 0.299 * r + 0.587 * g + 0.114 * b;
         }
         return brightArray;
     }
@@ -300,22 +282,14 @@ public class MainActivity extends AppCompatActivity {
         AData = new double[savedBrightArray.length];
         double dataMax = 0;
         for (int i = 0; i < savedBrightArray.length; i++) {
-            if (savedBrightArray[i] == 0) {
-                savedBrightArray[i] += 1;
-            }
-            if (brightArray[i] == 0) {
-                brightArray[i] += 1;
-            }
-            AData[i] = Math.log10(savedBrightArray[i] / brightArray[i]);
+            //吸光度计算
+            AData[i] = Math.log10((savedBrightArray[i] != 0 ? savedBrightArray[i] : savedBrightArray[i] + 0.1) / (brightArray[i] != 0 ? brightArray[i] : brightArray[i] + 0.1));
             if (dataMax < AData[i]) {
                 dataMax = AData[i];
             }
-            if (AData[i] < 0) {
-                AData[i] = 0;
-            }
         }
         int width = savedBrightArray.length;
-        int height = (dataMax != 0) ? (int) Math.ceil(dataMax) * 100 : 256;
+        int height = (dataMax != 0) ? (int) (Math.ceil(dataMax * 100) + 20) : 350;
         Bitmap.Config mConfig = Bitmap.Config.ARGB_8888;
         Bitmap bm = Bitmap.createBitmap(width, height, mConfig);
         Canvas canvas = new Canvas(bm);
@@ -329,10 +303,10 @@ public class MainActivity extends AppCompatActivity {
         //绘制路径
         Path path = new Path();
         //从哪个点开始绘制
-        path.moveTo(0, (float) (height - 100 * AData[0]));
+        path.moveTo(0, (float) (height - 100 * (AData[0] > 0 ? AData[0] : 0)));
         for (int i = 1; i < width; i++) {
             //然后绘制到哪个点
-            path.lineTo(i, (float) (height - 100 * AData[i]));
+            path.lineTo(i, (float) (height - 100 * (AData[i] > 0 ? AData[i] : 0)));
         }
         //按路径绘制
         canvas.drawPath(path, paint);
@@ -351,6 +325,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         vibrator.vibrate(50);
+        // TODO
         finalResult.setText("检测结果如下\n\n");
         finalResult.append("苹果糖度：");
     }
@@ -383,7 +358,7 @@ public class MainActivity extends AppCompatActivity {
                 isAbsorbance = false;
                 absorbancePlot = null;
             } else {
-                mCameraImagePath = savedmCameraImagePath;
+                mCameraImagePath = savedMCameraImagePath;
                 Toast.makeText(this, "取消", Toast.LENGTH_SHORT).show();
             }
         }
@@ -541,7 +516,7 @@ public class MainActivity extends AppCompatActivity {
                 finalResult.setText(null);
                 //清除变量
                 mCameraImagePath = null;
-                savedmCameraImagePath = null;
+                savedMCameraImagePath = null;
                 isAbsorbance = false;
                 brightArray = null;
                 savedBrightArray = null;
