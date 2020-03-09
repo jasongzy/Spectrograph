@@ -36,6 +36,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -110,7 +111,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
         // 绘制的曲线
         plot = findViewById(R.id.plot);
         plot.setOnClickListener(new View.OnClickListener() {
@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
             public boolean onLongClick(View view) {
                 if (mCameraImagePath != null) {
                     if (isAbsorbance) {
-                        toastMessage("点击悬浮按钮可切换光谱/吸光度曲线", false);
+                        toastMessage("点击可导出当前吸光度数据到 txt 文件", false);
                     } else {
                         toastMessage("点击可设置当前数据为「光源光谱」", false);
                     }
@@ -132,7 +132,6 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-
 
         // 相机按钮
         fab = findViewById(R.id.fab);
@@ -151,7 +150,6 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-
 
         // 图像对比按钮
         fabPlot = findViewById(R.id.fabPlot);
@@ -210,7 +208,8 @@ public class MainActivity extends AppCompatActivity {
     private void clickPlot() {
         if (mCameraImagePath != null) {
             if (isAbsorbance) {
-                Toast.makeText(this, "点击悬浮按钮可切换光谱/吸光度曲线", Toast.LENGTH_SHORT).show();
+                openTXT(saveAData(getFileName(mCameraImagePath), AData));
+                Toast.makeText(this, "正在打开吸光度数据文件", Toast.LENGTH_SHORT).show();
             } else {
                 Snackbar.make(this.findViewById(android.R.id.content), "是否设置当前数据为光源光谱？", Snackbar.LENGTH_LONG)
                         .setAction("是的", new View.OnClickListener() {
@@ -555,4 +554,67 @@ public class MainActivity extends AppCompatActivity {
             file.delete();
         }
     }
+
+    /**
+     * 根据文件路径获取文件名
+     *
+     * @param filePath 文件完整路径
+     */
+    public String getFileName(String filePath) {
+        int start = filePath.lastIndexOf("/");
+        int end = filePath.lastIndexOf(".");
+        if (start != -1 && end != -1) {
+            return filePath.substring(start + 1, end);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * 保存吸光度数据文件到txt
+     *
+     * @param imageName 当前图片文件名（作为txt文件名）
+     * @param AData     吸光度数组
+     */
+    public String saveAData(String imageName, double[] AData) {
+        File storageDir = getExternalFilesDir("AData");
+        if (!storageDir.exists()) {
+            storageDir.mkdir();
+        }
+        String filePath = storageDir + "/" + imageName + ".txt";
+        try {
+            FileOutputStream fos = new FileOutputStream(filePath);
+            for (int i = 0; i < AData.length; i++) {
+                fos.write((AData[i] + "\r\n").getBytes());
+                fos.flush();
+            }
+            fos.close();
+            return filePath;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * 调用默认程序打开指定路径的文本文档
+     *
+     * @param filePath 文件完整路径
+     */
+    public void openTXT(String filePath) {
+        Intent intent = new Intent("android.intent.action.VIEW");
+        intent.addCategory("android.intent.category.DEFAULT");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Uri uri;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            //适配Android 7.0文件权限，通过FileProvider创建一个content类型的Uri
+            uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", new File(filePath));
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } else {
+            uri = Uri.fromFile(new File(filePath));
+        }
+        intent.setDataAndType(uri, "text/plain");
+        this.startActivity(intent);
+    }
+
 }

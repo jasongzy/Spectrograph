@@ -5,5 +5,8 @@
         <external-files-path
             name="images"
             path="Pictures" />
+        <external-files-path
+            name="data"
+            path="AData" />
     </paths>
 </resources>
