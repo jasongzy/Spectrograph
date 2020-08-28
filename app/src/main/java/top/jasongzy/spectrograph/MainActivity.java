@@ -527,6 +527,7 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.about:
                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/jasongzy")));
+                ivPhoto.setImageDrawable(getResources().getDrawable(R.drawable.professortocat_v2));
                 break;
         }
         return true;
